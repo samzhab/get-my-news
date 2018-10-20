@@ -43,14 +43,14 @@ class GetMyNews
     search = gets.chomp
     search = search.split(',')
     query = "#{setup_query(search)}apiKey=#{api_key}"
-
     news_items = get_my_news(query)
     get_ip_obj = GetIpInfo.new
     if !news_items.nil?
       news_items.each do |article|
         ip_info = get_ip_obj.start(article['url'])
         article.merge!(ip_info)
-        write_articles_to_pdf(article)
+        write_brief_news_to_pdf(article)
+        # write_articles_to_pdf(article)
       end
     else
       puts '[newsapi] NO RESULTS FOUND'
@@ -66,6 +66,8 @@ class GetMyNews
         json['articles'].each do |item|
           article = {}
           article['soure_name'] = item['source']['name']
+          article['published_at'] = item['publishedAt']
+          article['content'] = item['content']
           article['url'] = item['url']
           news_items << article
           # article['author']
@@ -93,6 +95,36 @@ class GetMyNews
     html_to_pdf(html, article)
     html = add_ip_info_to_html(response,article)
     html_to_pdf(html, article, 'ip-info-added')
+  end
+
+  def write_brief_news_to_pdf(article)
+    html = construct_brief_news_html(article)
+    html_to_pdf(html, article)
+  end
+
+  def construct_brief_news_html(article)
+    html_template_file = 'html5_template'
+    template_path  = Dir.pwd + '/template_files/' + html_template_file + '.html'
+    html_template  = File.read(template_path)
+    doc = Nokogiri::HTML(html_template)
+    ip_info = Nokogiri::XML::Node.new "div", doc
+    line_break = Nokogiri::XML::Node.new "div", doc
+    brief_article_content = Nokogiri::XML::Node.new "div", doc
+    ip_info.content = "ipInfo >>>
+                      city: #{article['city']}
+                      country: #{article['country']}
+                      isp: #{article['isp']}
+                      lat:#{article['lat']} long:#{article['lon']}
+                      org: #{article['org']} ip:#{article['query']}
+                      region: #{article['regionName']} zip: #{article['zip']}
+                      "
+    line_break.content = "-----------------------------------------------------"
+    brief_article_content.content = "#{article['content']}"
+    doc.at("body").add_child(brief_article_content)
+    doc.at("body").add_child(line_break)
+    doc.at("body").add_child(ip_info)
+
+    doc.to_html
   end
 
   def add_ip_info_to_html(response,article)
@@ -180,11 +212,13 @@ class GetMyNews
     end
   end
 
-  def html_to_pdf(html, article, additional_info = '')
+  def html_to_pdf(html, article)
     # grab html title or domain name and use for file name
     # change to pdf and save to file
     file_name = article['soure_name'].to_s.gsub(' ','-')
-    PDFKit.new(html).to_file("articles\/#{file_name}#{additional_info}.pdf")
+    pub_date_time = article['published_at']
+    PDFKit.new(html).to_file("articles\/#{file_name}#{pub_date_time}.pdf")
+    # PDFKit.new(html).to_file("articles\/#{file_name}#{additional_info}.pdf")
   end
 
   def get_request(url)
