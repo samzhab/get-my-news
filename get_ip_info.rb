@@ -6,7 +6,11 @@ require 'byebug'
 
 class GetIpInfo
   def start(site)
-    query = setup_ip_query(clean(site))
+    if site.include?('http')
+      query = setup_ip_query(clean(site))
+    else
+      query = setup_ip_query(site)
+    end
     response = get_request(query) # max of 150 requests per minute
     json_response = process_json_response(response.body)
     return json_response if json_response['status'] == 'success'
@@ -19,7 +23,11 @@ class GetIpInfo
   end
 
   def setup_ip_query(url)
-    "http://ip-api.com/json/#{url[1]}"
+    if url.is_a? Array
+      return "http://ip-api.com/json/#{url[1]}"
+    else
+      return "http://ip-api.com/json/#{url}"
+    end
   end
 
   def process_json_response(response)
