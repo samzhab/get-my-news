@@ -1,4 +1,3 @@
-Inline-style:
 ![temporary logo](https://s2.gifyu.com/images/get_my_news4896a6a70992f7de.png "get_my_news temporary logo")
 ## get my news
 Uses https://newsapi.org to get two types of news
