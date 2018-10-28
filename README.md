@@ -12,7 +12,7 @@ Prerequisites:
 * required gems (see Gemfile)
 * linux terminal
 * newsapi Key (get one from https://newsapi.org)
-* mercury apiKey (get one from https://mercury.postlight.com)
+* mercury apiKey (get one from https://mercury.postlight.com/web-parser/)
 
 Current State:
 * gets top-headlines or everything
