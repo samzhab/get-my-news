@@ -1,3 +1,4 @@
+![screen capture get_my_news](https://s2.gifyu.com/images/get_my_news.png "get_my_news temporary logo")
 ## get my news
 Uses https://newsapi.org to get two types of news
 * top-headlines
@@ -5,6 +6,8 @@ Uses https://newsapi.org to get two types of news
 based on specific search parameters such as country, category, language etc...
 
 ![screen capture get_my_news](https://s2.gifyu.com/images/Peek-2018-10-28-18-13.gif "Screen Sample runing the script")
+
+
 
 Prerequisites:
 * rvm (rvm.io)
