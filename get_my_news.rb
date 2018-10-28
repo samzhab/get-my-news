@@ -44,17 +44,23 @@ class GetMyNews
     search = search.split(',')
     query = "#{setup_query(search)}apiKey=#{api_key}"
     news_items = get_my_news(query)
-    # get_ip_obj = GetIpInfo.new
+    get_ip_obj = GetIpInfo.new
     if !news_items.nil?
       news_items.each do |article|
+        puts "[newsapi] processing #{article['soure_name']}"
+        next if article['content'].nil?
         mercury_parsed = mercury_parse(article['url']) unless article['content']
                                                               .nil?
         article.merge!(mercury_parsed) if mercury_parsed['word_count'] > 1
-        next if article['content'].nil?
-        # ip_info = get_ip_obj.start(mercury_parsed['domain'])
-        # article.merge!(ip_info)
+        ip_info = if mercury_parsed['domain'] && mercury_parsed['word_count'] > 1
+                    get_ip_obj.start(mercury_parsed['domain'])
+                  else
+                    get_ip_obj.start(article['url'])
+                  end
+        article.merge!(ip_info) if ip_info
         write_brief_news_to_pdf(article)
         # write_articles_to_pdf(article)
+        puts "[newsapi] finished processing #{article['soure_name']}"
       end
     else
       puts '[newsapi] NO RESULTS FOUND'
@@ -112,24 +118,29 @@ class GetMyNews
     html_template  = File.read(template_path)
     template_doc = Nokogiri::HTML(html_template)
     mercury_doc = Nokogiri::HTML(article['content'])
-
-    # ip_info = Nokogiri::XML::Node.new "div", doc
+    ip_info = Nokogiri::XML::Node.new 'div', template_doc
+    published_at = Nokogiri::XML::Node.new 'div', template_doc
+    soure_name = Nokogiri::XML::Node.new 'div', template_doc
     line_break = Nokogiri::XML::Node.new 'div', template_doc
     brief_article_content = Nokogiri::XML::Node.new 'div', template_doc
-    # ip_info.content = "ipInfo >>>
-    #                   city: #{article['city']}
-    #                   country: #{article['country']}
-    #                   isp: #{article['isp']}
-    #                   lat:#{article['lat']} long:#{article['lon']}
-    #                   org: #{article['org']} ip:#{article['query']}
-    #                   region: #{article['regionName']} zip: #{article['zip']}
-    #                   "
+    ip_info.content = "ipInfo >>>
+                      city: #{article['city']}
+                      country: #{article['country']}
+                      isp: #{article['isp']}
+                      lat:#{article['lat']} long:#{article['lon']}
+                      org: #{article['org']} ip:#{article['query']}
+                      region: #{article['regionName']} zip: #{article['zip']}
+                      "
     line_break.content = '-----------------------------------------------------'
-    # brief_article_content.content = "#{article['content']}"
+    soure_name.content = article['soure_name']
+    published_at.content = article['published_at']
     brief_article_content.content = mercury_doc.children[1].text
-    template_doc.at('body').add_child(brief_article_content)
+    template_doc.at('body').add_child(ip_info)
     template_doc.at('body').add_child(line_break)
-    # template_doc.at("body").add_child(ip_info)
+    template_doc.at('body').add_child(soure_name)
+    template_doc.at('body').add_child(line_break)
+    template_doc.at('body').add_child(published_at)
+    template_doc.at('body').add_child(brief_article_content)
 
     template_doc.to_html
   end
