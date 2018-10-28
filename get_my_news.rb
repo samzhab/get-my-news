@@ -44,11 +44,15 @@ class GetMyNews
     search = search.split(',')
     query = "#{setup_query(search)}apiKey=#{api_key}"
     news_items = get_my_news(query)
-    get_ip_obj = GetIpInfo.new
+    # get_ip_obj = GetIpInfo.new
     if !news_items.nil?
       news_items.each do |article|
-        ip_info = get_ip_obj.start(article['url'])
-        article.merge!(ip_info)
+        mercury_parsed = mercury_parse(article['url']) unless article['content']
+                                                              .nil?
+        article.merge!(mercury_parsed) if mercury_parsed['word_count'] > 1
+        next if article['content'].nil?
+        # ip_info = get_ip_obj.start(mercury_parsed['domain'])
+        # article.merge!(ip_info)
         write_brief_news_to_pdf(article)
         # write_articles_to_pdf(article)
       end
@@ -58,7 +62,7 @@ class GetMyNews
   end
 
   def get_my_news(query)
-    response = get_request(query)
+    response = get_request(query, {}, {})
     news_items = []
     begin
       json = JSON.parse(response.body)
@@ -89,11 +93,11 @@ class GetMyNews
   end
 
   def write_articles_to_pdf(article)
-    response = get_request(article['url'])
+    response = get_request(article['url'], {}, {})
     sleep 1
     html = response.body
     html_to_pdf(html, article)
-    html = add_ip_info_to_html(response,article)
+    html = add_ip_info_to_html(response, article)
     html_to_pdf(html, article, 'ip-info-added')
   end
 
@@ -106,45 +110,48 @@ class GetMyNews
     html_template_file = 'html5_template'
     template_path  = Dir.pwd + '/template_files/' + html_template_file + '.html'
     html_template  = File.read(template_path)
-    doc = Nokogiri::HTML(html_template)
-    ip_info = Nokogiri::XML::Node.new "div", doc
-    line_break = Nokogiri::XML::Node.new "div", doc
-    brief_article_content = Nokogiri::XML::Node.new "div", doc
-    ip_info.content = "ipInfo >>>
-                      city: #{article['city']}
-                      country: #{article['country']}
-                      isp: #{article['isp']}
-                      lat:#{article['lat']} long:#{article['lon']}
-                      org: #{article['org']} ip:#{article['query']}
-                      region: #{article['regionName']} zip: #{article['zip']}
-                      "
-    line_break.content = "-----------------------------------------------------"
-    brief_article_content.content = "#{article['content']}"
-    doc.at("body").add_child(brief_article_content)
-    doc.at("body").add_child(line_break)
-    doc.at("body").add_child(ip_info)
+    template_doc = Nokogiri::HTML(html_template)
+    mercury_doc = Nokogiri::HTML(article['content'])
 
-    doc.to_html
+    # ip_info = Nokogiri::XML::Node.new "div", doc
+    line_break = Nokogiri::XML::Node.new 'div', template_doc
+    brief_article_content = Nokogiri::XML::Node.new 'div', template_doc
+    # ip_info.content = "ipInfo >>>
+    #                   city: #{article['city']}
+    #                   country: #{article['country']}
+    #                   isp: #{article['isp']}
+    #                   lat:#{article['lat']} long:#{article['lon']}
+    #                   org: #{article['org']} ip:#{article['query']}
+    #                   region: #{article['regionName']} zip: #{article['zip']}
+    #                   "
+    line_break.content = '-----------------------------------------------------'
+    # brief_article_content.content = "#{article['content']}"
+    brief_article_content.content = mercury_doc.children[1].text
+    template_doc.at('body').add_child(brief_article_content)
+    template_doc.at('body').add_child(line_break)
+    # template_doc.at("body").add_child(ip_info)
+
+    template_doc.to_html
   end
 
-  def add_ip_info_to_html(response,article)
+  def add_ip_info_to_html(response, article)
     doc = Nokogiri::XML(response.body)
-    ip_info = Nokogiri::XML::Node.new "ip_info", doc
+    ip_info = Nokogiri::XML::Node.new 'ip_info', doc
     ip_info.content = "#{article['as']} city: #{article['city']}
                       country: #{article['country']}
                       isp: #{article['isp']}
                       lat:#{article['lat']} long:#{article['lon']}
                       org: #{article['org']} ip:#{article['query']}
                       region: #{article['regionName']} zip: #{article['zip']}"
-   # doc.at("document").add_child(ip_info)
-   if doc.at("title")
-     doc.at("title").add_child(ip_info)
-   elsif doc.at("head")
-     doc.at("head").add_child(ip_info)
-   elsif doc.at("body")
-     doc.at("body").add_child(ip_info)
-   end
-   doc.to_html
+    # doc.at("document").add_child(ip_info)
+    if doc.at('title')
+      doc.at('title').add_child(ip_info)
+    elsif doc.at('head')
+      doc.at('head').add_child(ip_info)
+    elsif doc.at('body')
+      doc.at('body').add_child(ip_info)
+    end
+    doc.to_html
   end
 
   def setup_query(search)
@@ -215,19 +222,52 @@ class GetMyNews
   def html_to_pdf(html, article)
     # grab html title or domain name and use for file name
     # change to pdf and save to file
-    file_name = article['soure_name'].to_s.gsub(' ','-')
+    file_name = article['soure_name'].to_s.tr(' ', '-')
+                                     .delete('(').delete(')')
     pub_date_time = article['published_at']
     PDFKit.new(html).to_file("articles\/#{file_name}#{pub_date_time}.pdf")
     # PDFKit.new(html).to_file("articles\/#{file_name}#{additional_info}.pdf")
   end
 
-  def get_request(url)
+  def get_request(url, headers, payload)
     response = RestClient::Request.execute(method: :get, url: Addressable::URI
-                                             .parse(url) .normalize.to_str,
-                                           timeout: 5)
-    response
+                                           .parse(url) .normalize.to_str,
+                                           headers: headers, payload: payload,
+                                         timeout: 50)
+  rescue RestClient::Unauthorized, RestClient::Forbidden => err
+    puts 'Access denied!'
+    return err.response
+  rescue RestClient::BadGateway => err
+    puts 'BadGateway!'
+    return err.response
+  else
+    return response
+  end
+
+  def mercury_parse(url)
+    headers = setup_mercury_headers
+    request_url = setup_mercury_request_url(url)
+    response = get_request(request_url, headers, {})
+    return JSON.parse(response.body) if response.code == 200
+    mercury_parsed = {}
+    mercury_parsed['word_count'] = 0
+    mercury_parsed
+  end
+
+  def setup_mercury_headers
+    header = {}
+    header['Content-Type'] = 'application/x-www-form-urlencoded'
+    header['x-api-key'] = ''
+    header
+  end
+
+  def setup_mercury_request_url(url)
+    "https://mercury.postlight.com/parser?url=#{url}"
   end
 end
+
+# :TODO
+# check query for multiple terms separated by commas
 
 freaking_fast_news = GetMyNews.new
 freaking_fast_news.start
