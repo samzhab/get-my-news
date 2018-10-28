@@ -4,7 +4,7 @@ Uses https://newsapi.org to get two types of news
 * everything
 based on specific search parameters such as country, category, language etc...
 
-![screen capture get_my_news](https://s2.gifyu.com/images/Peek-2018-10-28-18-13.gif "Screen Sample runing the script") 
+![screen capture get_my_news](https://s2.gifyu.com/images/Peek-2018-10-28-18-13.gif "Screen Sample runing the script")
 
 Prerequisites:
 * rvm (rvm.io)
@@ -12,7 +12,7 @@ Prerequisites:
 * required gems (see Gemfile)
 * linux terminal
 * newsapi Key (get one from https://newsapi.org)
-* mercury apiKey (get one from https://mercury.postlight.com)
+* mercury apiKey (get one from https://mercury.postlight.com/web-parser/)
 
 Current State:
 * gets top-headlines or everything
