@@ -9,10 +9,17 @@ Prerequisites:
 * ruby interpreter (2.0+)
 * required gems (see Gemfile)
 * linux terminal
+* newsapi Key (get one from https://newsapi.org)
+* mercury apiKey (get one from https://mercury.postlight.com)
 
 Current State:
 * gets top-headlines or everything
 * saves result locally as pdf format
+
+Modules and APIs involved in this project:
+* newsapi
+* locate-ip api
+* mercury api
 
 Features to add [coming soon...]
 * add sortBy to queries
@@ -27,8 +34,10 @@ eg. `$ rvm gemset create get_my_news`
 `$ gem install bundler`
 * install necessary gems
 `$ bundle`
-* create folder 'articles'
+* create folder 'articles' for articles saved as pdf
 `$ mkdir articles`
+* create folder 'api_keys' for various api-keys used
+`$ mkdir api_keys`
 * make script executable
 `$ chmod +x <script_name.rb>`
 * run script
