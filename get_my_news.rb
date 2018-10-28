@@ -248,7 +248,7 @@ class GetMyNews
     headers = setup_mercury_headers
     request_url = setup_mercury_request_url(url)
     response = get_request(request_url, headers, {})
-    return JSON.parse(response.body) if response.code == 200
+    return JSON.parse(response.body) if response.code == 200 && !response.empty?
     mercury_parsed = {}
     mercury_parsed['word_count'] = 0
     mercury_parsed
