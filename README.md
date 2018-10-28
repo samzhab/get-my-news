@@ -4,6 +4,8 @@ Uses https://newsapi.org to get two types of news
 * everything
 based on specific search parameters such as country, category, language etc...
 
+![screen capture get_my_news](https://gifyu.com/image/TTnz "Screen Sample runing the script") 
+
 Prerequisites:
 * rvm (rvm.io)
 * ruby interpreter (2.0+)
