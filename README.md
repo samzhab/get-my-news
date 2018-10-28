@@ -1,5 +1,5 @@
-![temporary logo](https://s2.gifyu.com/images/get_my_news4896a6a70992f7de.png "get_my_news temporary logo")
-<!-- ## get my news -->
+## get my news
+![temporary logo](https://s2.gifyu.com/images/Peek-2018-10-29-00-13.gif "get_my_news temporary logo")
 Uses https://newsapi.org to get two types of news
 * top-headlines
 * everything
