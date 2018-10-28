@@ -5,6 +5,8 @@ require 'rest-client'
 require 'byebug'
 require 'pdfkit'
 require 'nokogiri'
+require 'yaml'
+# require 'selenium-webdriver'
 require File.expand_path('get_ip_info.rb')
 # ----------------------------------------------------------------------------
 class GetMyNews
@@ -31,23 +33,22 @@ class GetMyNews
   ].freeze
 
   def start
-    puts '[newsapi] GET YOUR NEWS FREAKING FAST'
-    puts '[newsapi] ENTER YOU APIKEY'
-    api_key = gets.chomp
-    puts '[newsapi] ENTER YOUR QUERY OPTIONS SEPARATED BY A COMMA'
-    puts '[newsapi] FORMAT country,category,keyword'
-    puts '[newsapi] eg. de,business,xrp'
-    puts '[newsapi] eg. us,sports,boxing'
-    puts '[newsapi] eg. health,brain'
-    puts '[newsapi] eg. fifa'
+    puts '[news-api] GET YOUR NEWS FREAKING FAST'
+    news_api_key = ask_or_load_news_apikey
+    puts '[news-api] ENTER YOUR QUERY OPTIONS SEPARATED BY A COMMA'
+    puts '[news-api] FORMAT country,category,keyword'
+    puts '[news-api] eg. de,business,xrp'
+    puts '[news-api] eg. us,sports,boxing'
+    puts '[news-api] eg. health,brain'
+    puts '[news-api] eg. fifa'
     search = gets.chomp
     search = search.split(',')
-    query = "#{setup_query(search)}apiKey=#{api_key}"
+    query = "#{setup_query(search)}apiKey=#{news_api_key}"
     news_items = get_my_news(query)
     get_ip_obj = GetIpInfo.new
     if !news_items.nil?
       news_items.each do |article|
-        puts "[newsapi] processing #{article['soure_name']}"
+        puts "[news-api] processing #{article['soure_name']}"
         next if article['content'].nil?
         mercury_parsed = mercury_parse(article['url']) unless article['content']
                                                               .nil?
@@ -60,10 +61,10 @@ class GetMyNews
         article.merge!(ip_info) if ip_info
         write_brief_news_to_pdf(article)
         # write_articles_to_pdf(article)
-        puts "[newsapi] finished processing #{article['soure_name']}"
+        puts "[news-api] finished processing #{article['soure_name']}"
       end
     else
-      puts '[newsapi] NO RESULTS FOUND'
+      puts '[news-api] NO RESULTS FOUND'
     end
   end
 
@@ -166,10 +167,10 @@ class GetMyNews
   end
 
   def setup_query(search)
-    puts '[newsapi] CHOOSE YOUR OPTION'
-    puts '[newsapi] 1 - GET TOP HEADLINES'
-    puts '[newsapi] 2 - GET EVERYTHING'
-    # puts '[newsapi] 3 - GET SOURCES'
+    puts '[news-api] CHOOSE YOUR OPTION'
+    puts '[news-api] 1 - GET TOP HEADLINES'
+    puts '[news-api] 2 - GET EVERYTHING'
+    # puts '[news-api] 3 - GET SOURCES'
     option = gets.chomp
     query = assign_query_type(search, option)
     if search
@@ -269,13 +270,65 @@ class GetMyNews
   def setup_mercury_headers
     header = {}
     header['Content-Type'] = 'application/x-www-form-urlencoded'
-    header['x-api-key'] = ''
+    mercury_api_key = ask_or_load_mercury_apikey
+    header['x-api-key'] = mercury_api_key
     header
+  end
+
+  def ask_or_load_news_apikey
+    if local_news_api_key?
+      YAML.load_file('api_keys/news_api_key.yml')
+    else
+      puts '[news-api] ENTER YOU APIKEY'
+      api_key = gets.chomp
+      save_news_api_key(api_key)
+      api_key
+    end
+  end
+
+  def local_news_api_key?
+    if File.exist?('api_keys/news_api_key.yml')
+      true
+    else
+      false
+    end
+  end
+
+  def save_news_api_key(api_key)
+    file = File.new('api_keys/news_api_key.yml', 'w')
+    file.write(api_key.to_yaml)
+    file.close
   end
 
   def setup_mercury_request_url(url)
     "https://mercury.postlight.com/parser?url=#{url}"
   end
+
+  def ask_or_load_mercury_apikey
+    if local_mercury_api_key?
+      YAML.load_file('api_keys/mercury_api_key.yml')
+    else
+      puts '[mercury-api] ENTER YOU APIKEY'
+      mercury_api_key = gets.chomp
+      save_mercury_api_key(mercury_api_key)
+      api_key
+    end
+  end
+
+  def local_mercury_api_key?
+    if File.exist?('api_keys/mercury_api_key.yml')
+      true
+    else
+      false
+    end
+  end
+
+  def save_mercury_api_key(api_key)
+    file = File.new('api_keys/mercury_api_key.yml', 'w')
+    file.write(api_key.to_yaml)
+    file.close
+  end
+
 end
 
 # :TODO
