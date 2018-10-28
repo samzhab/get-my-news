@@ -252,6 +252,7 @@ class GetMyNews
     puts 'BadGateway!'
     return err.response
   else
+    sleep 3
     return response
   end
 
