@@ -42,8 +42,10 @@ eg. `$ rvm gemset create get_my_news`
 `$ mkdir api_keys`
 * make script executable
 `$ chmod +x <script_name.rb>`
+* get api key for newsapi from https://newsapi.org/register
 * run script
 `$ ./<script_name.rb>`
+* enter newsapi
 
 
 Further Development [coming soon...]
