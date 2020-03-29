@@ -13,6 +13,6 @@ gem 'pdfkit'
 gem 'rest-client'
 gem 'rubocop', '~> 0.51.0', require: false
 gem 'wkhtmltopdf'
-gem 'nokogiri'
+gem "nokogiri", ">= 1.10.8"
 gem 'proxycrawl'
 gem 'selenium-webdriver'
