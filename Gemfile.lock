@@ -9,7 +9,7 @@ GEM
       unf (>= 0.0.5, < 1.0.0)
     http-cookie (1.0.3)
       domain_name (~> 0.5)
-    json (2.1.0)
+    json (2.3.0)
     mime-types (3.2.2)
       mime-types-data (~> 3.2015)
     mime-types-data (3.2018.0812)
@@ -50,7 +50,7 @@ PLATFORMS
 DEPENDENCIES
   addressable (~> 2.5.2)
   byebug
-  json (~> 2.1.0)
+  json (~> 2.3.0)
   nokogiri (>= 1.10.8)
   pdfkit
   rest-client
