@@ -1,4 +1,8 @@
 ## get my news
+
+![temporary logo](https://bt-strike.s3-us-west-2.amazonaws.com/images/ruby.gif "get-my-news temporary logo")
+
+
 Uses https://newsapi.org to get two types of news
 * top-headlines
 * everything
